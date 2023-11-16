@@ -2,21 +2,24 @@ using UnityEngine;
 
 public class HandFollow : MonoBehaviour
 {
-    public OVRHand l_hand;
-    public OVRSkeleton l_skeleton;
+    public OVRHand l_hand, r_hand;
+    public OVRSkeleton l_skeleton, r_skeleton;
     public Transform rightHand;
     private bool flipped;
 
     public void Awake()
     {
-        l_hand = rightHand.GetComponent<OVRHand>();
-        l_skeleton = rightHand.GetComponent<OVRSkeleton>();
+        l_hand = GetComponent<OVRHand>();
+        l_skeleton = GetComponent<OVRSkeleton>();
+
+        r_hand = rightHand.gameObject.GetComponent<OVRHand>();
+        r_skeleton = rightHand.gameObject.GetComponent<OVRSkeleton>();
     }
 
     void Update()
     {
         // Check if the rightHand is assigned and the hand is tracking
-        if (rightHand != null && l_hand.IsTracked)
+        if (rightHand != null && r_hand.IsTracked)
         {
             // If not flipped, flip the leftHand at the start
             if (!flipped)
@@ -25,13 +28,14 @@ public class HandFollow : MonoBehaviour
             }
 
             // Get the direction from rightHand to rightIndexTip
-            Vector3 direction = l_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - rightHand.position;
+            Vector3 direction = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - rightHand.position;
+            Vector3 reversedirection = l_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - transform.position;
 
             // Set the leftHand position to match the rightHand
-            transform.position = rightHand.position + new Vector3(-0.175f, 0, 0);
+            transform.position = rightHand.position + direction - reversedirection;
 
-            // Rotate the leftHand to face the direction from rightHand to rightIndexTip
-            transform.rotation = Quaternion.LookRotation(-direction, rightHand.up);
+            // Rotate the leftHand to face the right hand's index tip
+            transform.LookAt(rightHand.position - direction, rightHand.up);
         }
     }
 
