@@ -6,7 +6,7 @@ public class ErrorDisplay : MonoBehaviour
     public TextMeshProUGUI errorText;
     public int errorCount = 0;
     public bool isErrorCounting = false;
-    private readonly TimeDisplay timeDisplay;
+    private TimeDisplay timeDisplay;
     public void StopErrorCounting()
     {
         if (errorCount > 0 && timeDisplay.isStopwatchActive == false)

@@ -14,7 +14,7 @@ public class WhiteboardForHand : MonoBehaviour
     public Color color;
 
     private bool touching, touchingLast;
-
+    public bool isTouching;
     private float posX, posY;
     private float lastX, lastY;
 

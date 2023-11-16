@@ -16,20 +16,28 @@ public class EnableTime : MonoBehaviour
     private static extern UInt32 IsInpOutDriverOpen();
 
     // When we enter on a collider
+   
     public void OnTriggerEnter(Collider enabler)
     {
         if (enabler.gameObject.layer == 9 && !timeDisplay.isStopwatchActive == true)
         {
-            timeDisplay.isStopwatchActive = true;
-
-            Out32(20220, 1);
-
-            print("Port Açýk:" + "S"+Data);
-            print("Süre Baþladý.");
+            StartTime();
+    
         }
     }
-    public void FixedUpdate()
+
+    public void Update()
     {
         Out32(20220, 0);
+    }
+
+    void StartTime()
+    {
+        timeDisplay.isStopwatchActive = true;
+
+        Out32(20220, 1);
+
+        print("Port Açýk:" + "S" + Data);
+        print("Süre Baþladý.");
     }
 }
