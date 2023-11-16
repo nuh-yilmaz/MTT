@@ -25,6 +25,7 @@ public class HandFollow : MonoBehaviour
             if (!flipped)
             {
                 FlipHand();
+                rightHand.gameObject.SetActive(false);
             }
 
             // Get the direction from rightHand to rightIndexTip
@@ -37,6 +38,7 @@ public class HandFollow : MonoBehaviour
             // Rotate the leftHand to face the right hand's index tip
             transform.LookAt(rightHand.position - direction, rightHand.up);
         }
+
     }
 
     void FlipHand()
@@ -53,5 +55,6 @@ public class HandFollow : MonoBehaviour
         {
             Debug.LogError("Bones GameObject not found.");
         }
+
     }
 }
