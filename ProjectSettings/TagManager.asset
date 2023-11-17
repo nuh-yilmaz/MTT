@@ -8,6 +8,7 @@ TagManager:
   - Stop
   - Index
   - Hands
+  - Paper
   layers:
   - Default
   - TransparentFX
