@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 using System.Runtime.InteropServices;
-using Oculus.Interaction.PoseDetection;
 
 public class Manager : MonoBehaviour
 {
@@ -37,15 +36,17 @@ public class Manager : MonoBehaviour
     void Start()
     {
         // Create an empty GameObject for LineRenderer
-        GameObject lineObject = new GameObject("LineRendererObject");
+        GameObject lineObject = new("LineRendererObject");
         lineRenderer = lineObject.AddComponent<LineRenderer>();
         lineRenderer.positionCount = 0; // Start with an empty line
-        lineRenderer.startWidth = 0.01f; // Adjust the width of the line
-        lineRenderer.endWidth = 0.01f;
+        lineRenderer.startWidth = 0.005f; // Adjust the width of the line
+        lineRenderer.endWidth = 0.005f;
         lineRenderer.useWorldSpace = true;
         lineRenderer.Simplify(10);
-        lineRenderer.material = new Material(Shader.Find("Standard"));
-        lineRenderer.material.color = Color.black; // Set the line color to black
+        lineRenderer.material = new Material(Shader.Find("Standard"))
+        {
+            color = Color.black // Set the line color to black
+        };
 
         // Assign your parallel port address (LPT3)
         PortAddress = 0x278; // LPT3 address
