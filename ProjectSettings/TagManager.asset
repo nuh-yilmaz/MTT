@@ -4,11 +4,10 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Start
-  - Stop
-  - Index
   - Hands
   - Paper
+  - Table
+  - Square
   layers:
   - Default
   - TransparentFX
@@ -16,13 +15,13 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - IndexFinger
+  - Table
+  - Square
+  - Paper
   - Hands
-  - WhiteBoard
-  - EnableStopwatch
-  - DisableStopwatch
+  - 
+  - 
+  - 
   - 
   - 
   - 

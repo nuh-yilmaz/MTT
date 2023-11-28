@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System;
 using System.Runtime.InteropServices;
 
-public class Manager : MonoBehaviour
+public class ProjectManager : MonoBehaviour
 {
 
     private OVRHand m_hand;
@@ -12,7 +12,7 @@ public class Manager : MonoBehaviour
     private Transform indexDistal;
     [SerializeField, Range(0f, 0.5f)]
     private float distanceOffset;
-    private const int WHITEBOARD_LAYER = 10;
+    [SerializeField] LayerMask layerMask;
     private LineRenderer lineRenderer;
     private bool isDrawing = false;
 
@@ -39,8 +39,8 @@ public class Manager : MonoBehaviour
         GameObject lineObject = new("LineRendererObject");
         lineRenderer = lineObject.AddComponent<LineRenderer>();
         lineRenderer.positionCount = 0; // Start with an empty line
-        lineRenderer.startWidth = 0.005f; // Adjust the width of the line
-        lineRenderer.endWidth = 0.005f;
+        lineRenderer.startWidth = 0.01f; // Adjust the width of the line
+        lineRenderer.endWidth = 0.01f;
         lineRenderer.useWorldSpace = true;
         lineRenderer.Simplify(10);
         lineRenderer.material = new Material(Shader.Find("Standard"))
@@ -86,29 +86,11 @@ public class Manager : MonoBehaviour
 
         // Cast a ray starting from the second index finger joint to the tip of the index finger.
         // Only check for objects that are in the whiteboard layer.
-        if (Physics.Raycast(originPoint, direction, out RaycastHit touch, distance + distanceOffset, 1 << WHITEBOARD_LAYER) ||
-            Physics.Raycast(targetPoint, -direction, out touch, distance + distanceOffset, 1 << WHITEBOARD_LAYER))
+        if (Physics.Raycast(originPoint, direction, out RaycastHit touch, distance + distanceOffset, layerMask) ||
+            Physics.Raycast(targetPoint, -direction, out touch, distance + distanceOffset, layerMask))
         {
             if (touch.collider != null)
             {
-                // Check if the touch is within the borders of SquareOut
-                if (IsWithinBorders(touch.point, SquareOut))
-                {
-                    // Check if the touch is outside the borders of SquareIn
-                    if (!IsWithinBorders(touch.point, SquareIn))
-                    {
-                        // Increment error count
-                        errorCount++;
-                        SendTriggerToParallelPort(2);
-
-                        // Display error count on UI Text
-                        if (errorCountText != null)
-                        {
-                            errorCountText.text = "Hata: " + errorCount.ToString();
-                        }
-                    }
-                }
-
                 if (!isDrawing)
                 {
                     // Start drawing when touched
@@ -128,17 +110,29 @@ public class Manager : MonoBehaviour
                 }
                
 
-                // Optional: Rotate the lineRenderer to match the hand rotation
-                Vector3 handUp = m_hand.transform.up;
-                Vector3 worldUp = Vector3.up;
-                Quaternion rotation = Quaternion.FromToRotation(handUp, worldUp);
-                lineRenderer.transform.rotation = rotation * Quaternion.identity;
 
                 // Display elapsed time in the scene (optional)
                 if (elapsedTimeText != null)
                 {
                     totalElapsedTime += Time.deltaTime;
                     elapsedTimeText.text = "Elapsed Time: " + totalElapsedTime.ToString("F2") + " seconds";
+                }
+
+                if(startTime != 0)
+                {
+                    // Check if the touch is within the borders of SquareOut
+                    if (!IsWithinBorders(touch.point, SquareOut) || IsWithinBorders(touch.point, SquareIn))
+                    {
+                        // Increment error count
+                        errorCount++;
+                        SendTriggerToParallelPort(2);
+
+                        // Display error count on UI Text
+                        if (errorCountText != null)
+                        {
+                            errorCountText.text = "Hata: " + errorCount.ToString();
+                        }
+                    }
                 }
             }
         }
