@@ -1703,9 +1703,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _confidenceBehavior: 1
   _systemGestureBehavior: 1
-  _renderPhysicsCapsules: 0
+  _renderPhysicsCapsules: 1
   _skeletonMaterial: {fileID: 2100000, guid: 9c05c5a6e4902ff4082cfb34e5b64b2d, type: 2}
-  _capsuleMaterial: {fileID: 0}
+  _capsuleMaterial: {fileID: 2100000, guid: a7d241eee7369f84294fc08ad926295f, type: 2}
   _systemGestureMaterial: {fileID: 2100000, guid: 38beab19e7c1f7947afac78fd60f90b0, type: 2}
 --- !u!114 &2033884739
 MonoBehaviour:
@@ -1766,7 +1766,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdd6834a716f4f64f925a1958db79920, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distanceOffset: 0.015
+  distanceOffset: 0.01
   layerMask:
     serializedVersion: 2
     m_Bits: 256
@@ -1930,7 +1930,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _meshType: 0
+  _meshType: 1
 --- !u!114 &2119648273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1961,7 +1961,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2609c54f376cffc4da1ab9401cc1a36f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _skeletonType: 0
+  _skeletonType: 1
   _updateRootPose: 0
   _updateRootScale: 1
   _enablePhysicsCapsules: 1
@@ -1978,7 +1978,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7623a8f0b49cf4dbaa40aea4d4be64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HandType: 0
+  HandType: 1
   _pointerPoseRoot: {fileID: 0}
   m_showState: 3
 --- !u!114 &2119648276
@@ -2025,7 +2025,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdd6834a716f4f64f925a1958db79920, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distanceOffset: 0.015
+  distanceOffset: 0.01
   layerMask:
     serializedVersion: 2
     m_Bits: 256
@@ -3801,7 +3801,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 1452409158}
   - {fileID: 958765841}
-  - {fileID: 2127348926}
+  - {fileID: 1265882951102846968}
   - {fileID: 2136634386646057681}
   - {fileID: 572038463804791711}
-  - {fileID: 1265882951102846968}
+  - {fileID: 2127348926}

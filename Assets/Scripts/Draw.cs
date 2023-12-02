@@ -1,26 +1,28 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System;
 using System.Runtime.InteropServices;
+using System;
 
 public class ProjectManager : MonoBehaviour
 {
-
     private OVRHand m_hand;
     private OVRSkeleton m_skeleton;
     private Transform indexTip;
     private Transform indexDistal;
+
     [SerializeField, Range(0f, 0.5f)]
     private float distanceOffset;
+
     [SerializeField] LayerMask layerMask;
     private LineRenderer lineRenderer;
     private bool isDrawing = false;
 
-    private int errorCount = 0;  // Added errorCount variable
+    private int errorCount = 0;
     public Text errorCountText;
-    public GameObject SquareIn;  // Reference to SquareIn object
-    public GameObject SquareOut; // Reference to SquareOut object
-    public GameObject Paper; 
+
+    public GameObject SquareIn;
+    public GameObject SquareOut;
+    public GameObject Paper;
 
     private float startTime;
     private float totalElapsedTime = 0f;
@@ -28,30 +30,31 @@ public class ProjectManager : MonoBehaviour
 
     private int PortAddress;
     private int Data;
+
     [DllImport("inpoutx64.dll")]
     private static extern void Out32(int PortAddress, int Data);
+
     [DllImport("inpoutx64.dll")]
     private static extern UInt32 IsInpOutDriverOpen();
 
+    private bool isAdjustingPaper = false;
+
+    private bool isPaperPlaced = false;
+
+    private bool handsMovedAway = false;
+    private Vector3 paperPlacementPosition;
+
+    public void Awake()
+    {
+        m_hand = GetComponent<OVRHand>();
+        m_skeleton = GetComponent<OVRSkeleton>();
+    }
+
     void Start()
     {
-        // Create an empty GameObject for LineRenderer
-        GameObject lineObject = new("LineRendererObject");
-        lineRenderer = lineObject.AddComponent<LineRenderer>();
-        lineRenderer.positionCount = 0; // Start with an empty line
-        lineRenderer.startWidth = 0.01f; // Adjust the width of the line
-        lineRenderer.endWidth = 0.01f;
-        lineRenderer.useWorldSpace = true;
-        lineRenderer.Simplify(10);
-        lineRenderer.material = new Material(Shader.Find("Standard"))
-        {
-            color = Color.black // Set the line color to black
-        };
+        InitializeLineRenderer();
+        InitializeParallelPort();
 
-        // Assign your parallel port address (LPT3)
-        PortAddress = 0x278; // LPT3 address
-
-        // Ensure SquareIn, SquareOut, and Paper are assigned in the Unity Editor
         if (SquareIn == null || SquareOut == null || Paper == null)
         {
             Debug.LogError("Please assign SquareIn, SquareOut, and Paper in the Unity Editor.");
@@ -59,24 +62,37 @@ public class ProjectManager : MonoBehaviour
         }
     }
 
-    public void Awake()
+    void InitializeLineRenderer()
     {
-        // Get the scripts that hold information about hand tracking
-        m_hand = GetComponent<OVRHand>();
-        m_skeleton = GetComponent<OVRSkeleton>();
+        GameObject lineObject = new GameObject("Line");
+        lineRenderer = lineObject.AddComponent<LineRenderer>();
+        lineRenderer.positionCount = 0;
+        lineRenderer.startWidth = 0.01f;
+        lineRenderer.endWidth = 0.01f;
+        lineRenderer.useWorldSpace = true;
+        lineRenderer.Simplify(20);
+        lineRenderer.alignment = LineAlignment.TransformZ;
+        lineRenderer.material = new Material(Shader.Find("Standard")) { color = Color.black };
+    }
+
+    void InitializeParallelPort()
+    {
+        PortAddress = 0x278; // LPT3 address
     }
 
     void FixedUpdate()
     {
         if (indexTip == null && m_skeleton.IsInitialized)
         {
-            Debug.Log("Skeleton initialized");
             indexTip = m_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_IndexTip].Transform;
             indexDistal = m_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_Index3].Transform;
         }
 
-        // If hands aren't initialized yet, don't execute the rest of the script.
-        if (!indexTip) return;
+        if (!indexTip || !m_hand.IsDataHighConfidence)
+        {
+            // If hand tracking data is not available or not confident, return
+            return;
+        }
 
         Vector3 originPoint = indexDistal.position;
         Vector3 targetPoint = indexTip.position;
@@ -84,53 +100,82 @@ public class ProjectManager : MonoBehaviour
         Vector3 direction = Vector3.Normalize(targetPoint - originPoint);
         float distance = Vector3.Distance(originPoint, targetPoint);
 
-        // Cast a ray starting from the second index finger joint to the tip of the index finger.
-        // Only check for objects that are in the whiteboard layer.
-        if (Physics.Raycast(originPoint, direction, out RaycastHit touch, distance + distanceOffset, layerMask) ||
-            Physics.Raycast(targetPoint, -direction, out touch, distance + distanceOffset, layerMask))
+        if (!isPaperPlaced)
         {
-            if (touch.collider != null)
+            // If Paper is not placed, it follows the index finger tip only when finger is pinching
+            if (m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
             {
-                if (!isDrawing)
+                Vector3 targetPos = targetPoint;
+                targetPos.y = Paper.transform.position.y; // Maintain the Y-coordinate of the table
+                Paper.transform.position = targetPos;
+                paperPlacementPosition = Paper.transform.position; // Store the paper placement position
+                isPaperPlaced = true; // Set isPaperPlaced to true when the paper is placed
+            }
+        }
+
+        // Check if the hands have moved away at least 5 cm from the paper placement position
+        if (isPaperPlaced && Vector3.Distance(paperPlacementPosition, targetPoint) > 0.05f)
+        {
+            handsMovedAway = true;
+        }
+
+        // Check if the distance between touch positions is greater than 1mm and Paper is placed
+        if (isPaperPlaced && handsMovedAway && distance > 0.01f)
+        {
+            if (Physics.Raycast(originPoint, direction, out RaycastHit touch, distance + distanceOffset, layerMask) ||
+                Physics.Raycast(targetPoint, -direction, out touch, distance + distanceOffset, layerMask))
+            {
+                if (touch.collider != null)
                 {
-                    // Start drawing when touched
-                    isDrawing = true;
-                    startTime = Time.time;
+                    Vector3 touchPoint = touch.point;
+                    touchPoint.y = Paper.transform.position.y; // Set the Y-coordinate to match the table
 
-                    SendTriggerToParallelPort(1);
-
-                    lineRenderer.positionCount = 1;
-                    lineRenderer.SetPosition(0, touch.point);
-                }
-                else
-                {
-                    // Update LineRenderer positions when drawing
-                    lineRenderer.positionCount++;
-                    lineRenderer.SetPosition(lineRenderer.positionCount - 1, touch.point);
-                }
-               
-
-
-                // Display elapsed time in the scene (optional)
-                if (elapsedTimeText != null)
-                {
-                    totalElapsedTime += Time.deltaTime;
-                    elapsedTimeText.text = "Elapsed Time: " + totalElapsedTime.ToString("F2") + " seconds";
-                }
-
-                if(startTime != 0)
-                {
-                    // Check if the touch is within the borders of SquareOut
-                    if (!IsWithinBorders(touch.point, SquareOut) || IsWithinBorders(touch.point, SquareIn))
+                    if (!isDrawing)
                     {
-                        // Increment error count
-                        errorCount++;
-                        SendTriggerToParallelPort(2);
+                        isDrawing = true;
+                        startTime = Time.time;
 
-                        // Display error count on UI Text
-                        if (errorCountText != null)
+                        // Create a new empty GameObject to serve as the container for the line renderer
+                        GameObject lineContainer = new GameObject("LineContainer");
+                        lineContainer.transform.position = touchPoint;
+                        lineContainer.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
+                        // Attach the line renderer to the line container
+                        lineRenderer.transform.parent = lineContainer.transform;
+
+                        SendTriggerToParallelPort(1);
+
+                        lineRenderer.positionCount = 1;
+                        lineRenderer.SetPosition(0, touch.point);
+                    }
+                    else
+                    {
+                        float lastDistance = Vector3.Distance(lineRenderer.GetPosition(lineRenderer.positionCount - 1), touch.point);
+                        // Draw a line only if the distance between touch positions is greater than 1mm
+                        if (lastDistance > 0.001f)
                         {
-                            errorCountText.text = "Hata: " + errorCount.ToString();
+                            lineRenderer.positionCount++;
+                            lineRenderer.SetPosition(lineRenderer.positionCount - 1, touch.point);
+                        }
+                    }
+
+                    if (elapsedTimeText != null)
+                    {
+                        totalElapsedTime += Time.deltaTime;
+                        elapsedTimeText.text = "Süre: " + totalElapsedTime.ToString("F2");
+                    }
+
+                    if (startTime != 0)
+                    {
+                        if (!IsWithinBorders(touch.point, SquareOut) || IsWithinBorders(touch.point, SquareIn))
+                        {
+                            errorCount++;
+                            SendTriggerToParallelPort(2);
+
+                            if (errorCountText != null)
+                            {
+                                errorCountText.text = "Hata: " + errorCount.ToString();
+                            }
                         }
                     }
                 }
@@ -138,38 +183,39 @@ public class ProjectManager : MonoBehaviour
         }
         else
         {
-            // Stop drawing when not touching
             isDrawing = false;
         }
     }
+
+    void Update()
+    {
+        // Detect input to start adjusting the paper's position
+        if (m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
+        {
+            isAdjustingPaper = true;
+        }
+
+        // Detect input to stop adjusting the paper's position
+        if (!m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
+        {
+            isAdjustingPaper = false;
+        }
+    }
+
     private void SendTriggerToParallelPort(int triggerValue)
     {
-        // Set the Data value to the unique trigger value for each error
         Data = triggerValue;
         Out32(PortAddress, Data);
 
-        // Reset the trigger immediately
         Data = 0;
         Out32(PortAddress, Data);
     }
 
     private bool IsWithinBorders(Vector3 point, GameObject square)
     {
-        // Check if the point is within the borders of the square
         Renderer squareRenderer = square.GetComponent<Renderer>();
         Bounds squareBounds = squareRenderer.bounds;
 
         return squareBounds.Contains(point);
     }
-    private void CenterSquareOnPaper(GameObject square)
-    {
-        // Ensure the square and paper are not null
-        if (square == null || Paper == null)
-        {
-            return;
-        }
-
-        // Set the position of the square to the center of the paper
-        square.transform.position = Paper.transform.position;
-    }
-}
+  }
