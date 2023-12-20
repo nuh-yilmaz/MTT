@@ -2,20 +2,19 @@ using UnityEngine;
 
 public class HandFollow : MonoBehaviour
 {
-    public OVRHand l_hand, r_hand;
-    public OVRSkeleton l_skeleton, r_skeleton;
+    public OVRHand m_hand, r_hand;
+    public OVRSkeleton m_skeleton, r_skeleton;
     public Transform rightHand;
     private bool flipped;
 
     public void Awake()
     {
-        l_hand = GetComponent<OVRHand>();
-        l_skeleton = GetComponent<OVRSkeleton>();
+        m_hand = GetComponent<OVRHand>();
+        m_skeleton = GetComponent<OVRSkeleton>();
 
         r_hand = rightHand.gameObject.GetComponent<OVRHand>();
         r_skeleton = rightHand.gameObject.GetComponent<OVRSkeleton>();
     }
-
     void Update()
     {
         // Check if the rightHand is assigned and the hand is tracking
@@ -25,15 +24,15 @@ public class HandFollow : MonoBehaviour
             if (!flipped)
             {
                 FlipHand();
-                rightHand.gameObject.SetActive(false);
+                //rightHand.gameObject.SetActive(false);
             }
 
             // Get the direction from rightHand to rightIndexTip
             Vector3 direction = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - rightHand.position;
-            Vector3 reversedirection = l_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - transform.position;
+            Vector3 reversedirection = m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - transform.position;
 
             // Set the leftHand position to match the rightHand
-            transform.position = rightHand.position + direction - reversedirection;
+            transform.position = rightHand.position + direction + reversedirection;
 
             // Rotate the leftHand to face the right hand's index tip
             transform.LookAt(rightHand.position - direction, rightHand.up);
@@ -43,12 +42,11 @@ public class HandFollow : MonoBehaviour
 
     void FlipHand()
     {
-        GameObject bones = GameObject.Find("[BuildingBlock] Hand Tracking left/Bones");
+        GameObject bones = GameObject.Find("leftHand/Bones");
         if (bones != null)
         {
-            Vector3 scale = bones.transform.localScale;
-            scale.z = -Mathf.Abs(scale.z);
-            bones.transform.localScale = scale;
+            Vector3 rot = transform.rotation.eulerAngles;
+            transform.rotation = Quaternion.Euler(rot.x, rot.y, rot.z + 90);
             flipped = true; // Set the flag to true so that this block is not executed in subsequent frames
         }
         else
@@ -57,4 +55,5 @@ public class HandFollow : MonoBehaviour
         }
 
     }
+    
 }
