@@ -143,7 +143,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 73299637}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.008726558, z: 0, w: 0.999962}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: -1}
   m_ConstrainProportionsScale: 0
@@ -152,7 +152,7 @@ Transform:
   - {fileID: 595501433}
   - {fileID: 1142156493}
   m_Father: {fileID: 1088086073}
-  m_LocalEulerAnglesHint: {x: 0, y: 1, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &370576126
 GameObject:
   m_ObjectHideFlags: 0
@@ -965,14 +965,14 @@ GameObject:
   - component: {fileID: 1142156497}
   - component: {fileID: 1142156496}
   - component: {fileID: 1142156495}
-  - component: {fileID: 1142156503}
+  - component: {fileID: 1142156494}
   m_Layer: 9
   m_Name: mirHand
   m_TagString: Hands
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1142156493
 Transform:
   m_ObjectHideFlags: 0
@@ -988,6 +988,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 73299638}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1142156494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1142156492}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1499071abd47f3844a37a60d2f522966, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_hand: {fileID: 0}
+  r_hand: {fileID: 0}
+  m_skeleton: {fileID: 0}
+  r_skeleton: {fileID: 0}
+  rightHand: {fileID: 2033884734}
 --- !u!114 &1142156495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1093,7 +1110,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _meshType: 0
+  _meshType: 1
 --- !u!114 &1142156499
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1124,7 +1141,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2609c54f376cffc4da1ab9401cc1a36f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _skeletonType: 0
+  _skeletonType: 1
   _updateRootPose: 0
   _updateRootScale: 1
   _enablePhysicsCapsules: 1
@@ -1141,7 +1158,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7623a8f0b49cf4dbaa40aea4d4be64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HandType: 0
+  HandType: 1
   _pointerPoseRoot: {fileID: 0}
   m_showState: 3
 --- !u!114 &1142156502
@@ -1159,23 +1176,6 @@ MonoBehaviour:
   blockId: 8b26b298-7bf4-490e-b245-a039c0184303
   instanceId: 9950df93-ebe3-4e79-a603-06646ac54834
   version: 1
---- !u!114 &1142156503
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1142156492}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c74b3670600ac4144935d76d4615da3a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_hand: {fileID: 0}
-  r_hand: {fileID: 0}
-  m_skeleton: {fileID: 0}
-  r_skeleton: {fileID: 0}
-  rightHand: {fileID: 2033884734}
 --- !u!1 &1180429765
 GameObject:
   m_ObjectHideFlags: 0
@@ -1789,7 +1789,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1897575785
 Transform:
   m_ObjectHideFlags: 0
@@ -2181,7 +2181,7 @@ GameObject:
   - component: {fileID: 2119648271}
   - component: {fileID: 2119648270}
   - component: {fileID: 2119648279}
-  - component: {fileID: 2119648280}
+  - component: {fileID: 2119648278}
   m_Layer: 9
   m_Name: leftHand
   m_TagString: Hands
@@ -2249,7 +2249,7 @@ SkinnedMeshRenderer:
   m_SortingOrder: 0
   serializedVersion: 2
   m_Quality: 0
-  m_UpdateWhenOffscreen: 1
+  m_UpdateWhenOffscreen: 0
   m_SkinnedMotionVectors: 1
   m_Mesh: {fileID: 0}
   m_Bones: []
@@ -2288,7 +2288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _meshType: 0
+  _meshType: 1
 --- !u!114 &2119648273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2319,7 +2319,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2609c54f376cffc4da1ab9401cc1a36f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _skeletonType: 0
+  _skeletonType: 1
   _updateRootPose: 0
   _updateRootScale: 1
   _enablePhysicsCapsules: 1
@@ -2336,8 +2336,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb7623a8f0b49cf4dbaa40aea4d4be64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HandType: 0
-  _pointerPoseRoot: {fileID: 2033884734}
+  HandType: 1
+  _pointerPoseRoot: {fileID: 0}
   m_showState: 3
 --- !u!114 &2119648276
 MonoBehaviour:
@@ -2354,6 +2354,23 @@ MonoBehaviour:
   blockId: 8b26b298-7bf4-490e-b245-a039c0184303
   instanceId: 21f00f14-4db9-4cdf-8123-a18113ad1bb4
   version: 1
+--- !u!114 &2119648278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119648268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1499071abd47f3844a37a60d2f522966, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_hand: {fileID: 0}
+  r_hand: {fileID: 0}
+  m_skeleton: {fileID: 0}
+  r_skeleton: {fileID: 0}
+  rightHand: {fileID: 2033884734}
 --- !u!114 &2119648279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2375,23 +2392,6 @@ MonoBehaviour:
   SquareOut: {fileID: 1718894978}
   Paper: {fileID: 1439893632470150648}
   elapsedTimeText: {fileID: 407275152}
---- !u!114 &2119648280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2119648268}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c74b3670600ac4144935d76d4615da3a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_hand: {fileID: 0}
-  r_hand: {fileID: 0}
-  m_skeleton: {fileID: 0}
-  r_skeleton: {fileID: 0}
-  rightHand: {fileID: 2033884734}
 --- !u!1 &2127348922
 GameObject:
   m_ObjectHideFlags: 0

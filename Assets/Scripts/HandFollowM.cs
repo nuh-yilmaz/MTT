@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class HandFollow : MonoBehaviour
@@ -15,6 +16,11 @@ public class HandFollow : MonoBehaviour
         r_hand = rightHand.gameObject.GetComponent<OVRHand>();
         r_skeleton = rightHand.gameObject.GetComponent<OVRSkeleton>();
     }
+    public void Start()
+    {
+        //rightHand.gameObject.SetActive(false);
+        m_hand.GetComponent<OVRHand>().HandType = OVRHand.Hand.HandRight;
+    }
     void Update()
     {
         // Check if the rightHand is assigned and the hand is tracking
@@ -28,14 +34,16 @@ public class HandFollow : MonoBehaviour
             }
 
             // Get the direction from rightHand to rightIndexTip
-            Vector3 direction = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - rightHand.position;
-            Vector3 reversedirection = m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - transform.position;
+            Vector3 directionStart = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_WristRoot].Transform.position;
+            Vector3 directionFinish = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position;
+            Vector3 direction = directionStart - directionFinish;
+            Vector3 reverseDirection = m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_WristRoot].Transform.position;
 
             // Set the leftHand position to match the rightHand
-            transform.position = rightHand.position + direction + reversedirection;
+            transform.position = directionStart - direction - reverseDirection;
 
             // Rotate the leftHand to face the right hand's index tip
-            transform.LookAt(rightHand.position - direction, rightHand.up);
+            transform.LookAt(directionFinish+direction, rightHand.up);
         }
 
     }
@@ -45,8 +53,8 @@ public class HandFollow : MonoBehaviour
         GameObject bones = GameObject.Find("leftHand/Bones");
         if (bones != null)
         {
-            Vector3 rot = transform.rotation.eulerAngles;
-            transform.rotation = Quaternion.Euler(rot.x, rot.y, rot.z + 90);
+            Vector3 rot = rightHand.rotation.eulerAngles;
+            transform.rotation = Quaternion.Euler(rot.x, rot.y, rot.z + 180);
             flipped = true; // Set the flag to true so that this block is not executed in subsequent frames
         }
         else
