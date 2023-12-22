@@ -29,8 +29,8 @@ public class HandFollow : MonoBehaviour
             // If not flipped, flip the leftHand at the start
             if (!flipped)
             {
-                FlipHand();
-                //rightHand.gameObject.SetActive(false);
+                //FlipHand();
+                rightHand.gameObject.SetActive(false);
             }
 
             // Get the direction from rightHand to rightIndexTip
@@ -40,21 +40,20 @@ public class HandFollow : MonoBehaviour
             Vector3 reverseDirection = m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_WristRoot].Transform.position;
 
             // Set the leftHand position to match the rightHand
-            transform.position = directionStart - direction - reverseDirection;
-
-            // Rotate the leftHand to face the right hand's index tip
-            transform.LookAt(directionFinish+direction, rightHand.up);
+            transform.position = directionFinish - reverseDirection;
+            transform.rotation = Quaternion.LookRotation(direction,rightHand.up);
+           
         }
 
     }
 
     void FlipHand()
     {
-        GameObject bones = GameObject.Find("leftHand/Bones");
+        GameObject bones = GameObject.Find("mirHand/Bones");
         if (bones != null)
         {
             Vector3 rot = rightHand.rotation.eulerAngles;
-            transform.rotation = Quaternion.Euler(rot.x, rot.y, rot.z + 180);
+            transform.rotation = Quaternion.Euler(rot.x, rot.y, rot.z);
             flipped = true; // Set the flag to true so that this block is not executed in subsequent frames
         }
         else
