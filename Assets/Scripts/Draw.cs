@@ -2,24 +2,41 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Runtime.InteropServices;
 using System;
+using static OVRPlugin;
+using Unity.VisualScripting;
 
 public class ProjectManager : MonoBehaviour
 {
-    private OVRHand m_hand;
-    private OVRSkeleton m_skeleton;
+    public enum DrawingMode
+    {
+        normalMode,
+        mirrorMode
+    }
+
+    private DrawingMode currentDrawingMode = DrawingMode.normalMode;
+    private int totalDrawings = 0;
+    private int maxDrawings = 20;
+
+    public OVRHand m_hand, r_hand, l_hand;
+    public OVRSkeleton m_skeleton, r_skeleton, l_skeleton;
+    public Transform rightHand, leftHand, mirHand;
     private Transform indexTip;
     private Transform indexDistal;
-
     [SerializeField, Range(0f, 0.5f)]
     private float distanceOffset;
 
+    private bool isAdjustingPaper = false;
+    private bool isPaperPlaced = false;
+    private bool handsMovedAway = false;
+    private Vector3 paperPlacementPosition;
     [SerializeField] LayerMask layerMask;
     private LineRenderer lineRenderer;
     private bool isDrawing = false;
+    private Vector3 firstTouchPoint;
 
     private int errorCount = 0;
     public Text errorCountText;
-
+    private bool isErrorCounted;
     public GameObject SquareIn;
     public GameObject SquareOut;
     public GameObject Paper;
@@ -30,38 +47,44 @@ public class ProjectManager : MonoBehaviour
 
     private int PortAddress;
     private int Data;
-
     [DllImport("inpoutx64.dll")]
     private static extern void Out32(int PortAddress, int Data);
-
     [DllImport("inpoutx64.dll")]
     private static extern UInt32 IsInpOutDriverOpen();
 
-    private bool isAdjustingPaper = false;
-
-    private bool isPaperPlaced = false;
-
-    private bool handsMovedAway = false;
-    private Vector3 paperPlacementPosition;
-
     public void Awake()
     {
-        m_hand = GetComponent<OVRHand>();
-        m_skeleton = GetComponent<OVRSkeleton>();
+        r_hand = rightHand.gameObject.GetComponent<OVRHand>();
+        r_skeleton = rightHand.gameObject.GetComponent<OVRSkeleton>();
+
+        l_hand = leftHand.gameObject.GetComponent<OVRHand>();
+        l_skeleton = leftHand.gameObject.GetComponent<OVRSkeleton>();
+
+        m_hand = mirHand.gameObject.GetComponent<OVRHand>();
+        m_skeleton = mirHand.gameObject.GetComponent<OVRSkeleton>();
     }
 
     void Start()
     {
         InitializeLineRenderer();
         InitializeParallelPort();
-
+        if (currentDrawingMode == DrawingMode.mirrorMode) 
+        {
+            Mirroring();
+            rightHand.gameObject.SetActive(false);
+            leftHand.gameObject.SetActive(false);
+        }
+        else
+        {
+            rightHand.gameObject.SetActive(false);
+            mirHand.gameObject.SetActive(false);
+        }
         if (SquareIn == null || SquareOut == null || Paper == null)
         {
             Debug.LogError("Please assign SquareIn, SquareOut, and Paper in the Unity Editor.");
             return;
         }
     }
-
     void InitializeLineRenderer()
     {
         GameObject lineObject = new GameObject("Line");
@@ -82,10 +105,10 @@ public class ProjectManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (indexTip == null && m_skeleton.IsInitialized)
+        if (indexTip == null && r_skeleton.IsInitialized)
         {
-            indexTip = m_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_IndexTip].Transform;
-            indexDistal = m_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_Index3].Transform;
+            indexTip = r_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_IndexTip].Transform;
+            indexDistal = r_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_Index3].Transform;
         }
 
         if (!indexTip || !m_hand.IsDataHighConfidence)
@@ -103,7 +126,7 @@ public class ProjectManager : MonoBehaviour
         if (!isPaperPlaced)
         {
             // If Paper is not placed, it follows the index finger tip only when finger is pinching
-            if (m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
+            if (r_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
             {
                 Vector3 targetPos = targetPoint;
                 targetPos.y = Paper.transform.position.y; // Maintain the Y-coordinate of the table
@@ -147,6 +170,9 @@ public class ProjectManager : MonoBehaviour
 
                         lineRenderer.positionCount = 1;
                         lineRenderer.SetPosition(0, touch.point);
+
+                        // Store the first touch point for comparison
+                        firstTouchPoint = touch.point;
                     }
                     else
                     {
@@ -167,15 +193,28 @@ public class ProjectManager : MonoBehaviour
 
                     if (startTime != 0)
                     {
-                        if (!IsWithinBorders(touch.point, SquareOut) || IsWithinBorders(touch.point, SquareIn))
-                        {
-                            errorCount++;
-                            SendTriggerToParallelPort(2);
+                        bool isOutsideSquareOut = !IsWithinBorders(touch.point, SquareOut);
+                        bool isInsideSquareIn = IsWithinBorders(touch.point, SquareIn);
 
-                            if (errorCountText != null)
+                        if (isOutsideSquareOut || isInsideSquareIn)
+                        {
+                            // Count the error only once for each entry into SquareIn or exit from SquareOut
+                            if (!isErrorCounted)
                             {
-                                errorCountText.text = "Hata: " + errorCount.ToString();
+                                errorCount++;
+                                SendTriggerToParallelPort(2);
+
+                                if (errorCountText != null)
+                                {
+                                    errorCountText.text = "Hata: " + errorCount.ToString();
+                                }
+
+                                isErrorCounted = true; // Set the flag to indicate that an error has been counted
                             }
+                        }
+                        else
+                        {
+                            isErrorCounted = false; // Reset the flag when within SquareOut and outside SquareIn
                         }
                     }
                 }
@@ -183,10 +222,19 @@ public class ProjectManager : MonoBehaviour
         }
         else
         {
-            isDrawing = false;
+            if (isDrawing)
+            {
+                // Check if the first touch point is the same as the last touch point to detect the end of drawing
+                if (Vector3.Distance(firstTouchPoint, lineRenderer.GetPosition(lineRenderer.positionCount - 1)) < 0.001f)
+                {
+                    // Drawing is finished
+                    isDrawing = false;
+                    isErrorCounted = false; // Reset the flag when drawing is finished
+                    SwitchDrawingMode();
+                }
+            }
         }
     }
-
     void Update()
     {
         // Detect input to start adjusting the paper's position
@@ -218,4 +266,33 @@ public class ProjectManager : MonoBehaviour
 
         return squareBounds.Contains(point);
     }
-  }
+    void SwitchDrawingMode()
+    {
+        totalDrawings++;
+
+        SetDrawingMode(UnityEngine.Random.Range(0, 2) == 0 ? DrawingMode.normalMode : DrawingMode.mirrorMode);
+        handsMovedAway = false;
+        lineRenderer.positionCount = 0;
+
+        if (totalDrawings > maxDrawings)
+        {
+            //UnityEditor.EditorApplication.isPlaying = false;
+        }
+    }
+    public void SetDrawingMode(DrawingMode mode)
+    {
+        currentDrawingMode = mode;
+    }
+    private void Mirroring()
+    {
+        // Get the direction from rightHand to rightIndexTip
+        Vector3 directionStart = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_WristRoot].Transform.position;
+        Vector3 directionFinish = r_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position;
+        Vector3 direction = directionStart - directionFinish;
+        Vector3 reverseDirection = m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_IndexTip].Transform.position - m_skeleton.Bones[(int)OVRSkeleton.BoneId.Hand_WristRoot].Transform.position;
+
+        // Set the leftHand position to match the rightHand
+        transform.position = directionFinish - reverseDirection;
+        transform.rotation = Quaternion.LookRotation(direction, rightHand.up);
+    }
+}
