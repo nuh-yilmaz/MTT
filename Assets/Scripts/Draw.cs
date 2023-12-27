@@ -68,53 +68,49 @@ public class ProjectManager : MonoBehaviour
     {
         InitializeLineRenderer();
         InitializeParallelPort();
-        if (currentDrawingMode == DrawingMode.mirrorMode) 
-        {
-            Mirroring();
-            rightHand.gameObject.SetActive(false);
-            leftHand.gameObject.SetActive(false);
-        }
-        else
-        {
-            rightHand.gameObject.SetActive(false);
-            mirHand.gameObject.SetActive(false);
-        }
+        
         if (SquareIn == null || SquareOut == null || Paper == null)
         {
             Debug.LogError("Please assign SquareIn, SquareOut, and Paper in the Unity Editor.");
             return;
         }
     }
-    void InitializeLineRenderer()
-    {
-        GameObject lineObject = new GameObject("Line");
-        lineRenderer = lineObject.AddComponent<LineRenderer>();
-        lineRenderer.positionCount = 0;
-        lineRenderer.startWidth = 0.01f;
-        lineRenderer.endWidth = 0.01f;
-        lineRenderer.useWorldSpace = true;
-        lineRenderer.Simplify(20);
-        lineRenderer.alignment = LineAlignment.TransformZ;
-        lineRenderer.material = new Material(Shader.Find("Standard")) { color = Color.black };
-    }
-
-    void InitializeParallelPort()
-    {
-        PortAddress = 0x278; // LPT3 address
-    }
 
     void FixedUpdate()
     {
-        if (indexTip == null && r_skeleton.IsInitialized)
+        if (currentDrawingMode == DrawingMode.mirrorMode)
         {
-            indexTip = r_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_IndexTip].Transform;
-            indexDistal = r_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_Index3].Transform;
-        }
+            if (!m_hand.IsDataHighConfidence)
+            {
+                // If hand tracking data is not available or not confident, return
+                return;
+            }
 
-        if (!indexTip || !m_hand.IsDataHighConfidence)
+            if (indexTip == null && m_skeleton.IsInitialized)
+            {
+                indexTip = m_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_IndexTip].Transform;
+                indexDistal = m_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_Index3].Transform;
+            }
+            Mirroring();
+            rightHand.gameObject.SetActive(false);
+            leftHand.gameObject.SetActive(false);
+        }
+        else
         {
-            // If hand tracking data is not available or not confident, return
-            return;
+            if (!r_hand.IsDataHighConfidence)
+            {
+                // If hand tracking data is not available or not confident, return
+                return;
+            }
+
+            if (indexTip == null && r_skeleton.IsInitialized)
+            {
+                indexTip = r_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_IndexTip].Transform;
+                indexDistal = r_skeleton.Bones[(int)OVRPlugin.BoneId.Hand_Index3].Transform;
+            }
+
+            leftHand.gameObject.SetActive(false);
+            mirHand.gameObject.SetActive(false);
         }
 
         Vector3 originPoint = indexDistal.position;
@@ -126,7 +122,7 @@ public class ProjectManager : MonoBehaviour
         if (!isPaperPlaced)
         {
             // If Paper is not placed, it follows the index finger tip only when finger is pinching
-            if (r_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
+            if (r_hand.GetFingerIsPinching(OVRHand.HandFinger.Index) || m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
             {
                 Vector3 targetPos = targetPoint;
                 targetPos.y = Paper.transform.position.y; // Maintain the Y-coordinate of the table
@@ -150,27 +146,15 @@ public class ProjectManager : MonoBehaviour
             {
                 if (touch.collider != null)
                 {
-                    Vector3 touchPoint = touch.point;
-                    touchPoint.y = Paper.transform.position.y; // Set the Y-coordinate to match the table
-
                     if (!isDrawing)
                     {
                         isDrawing = true;
                         startTime = Time.time;
 
-                        // Create a new empty GameObject to serve as the container for the line renderer
-                        GameObject lineContainer = new GameObject("LineContainer");
-                        lineContainer.transform.position = touchPoint;
-                        lineContainer.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
-
-                        // Attach the line renderer to the line container
-                        lineRenderer.transform.parent = lineContainer.transform;
-
                         SendTriggerToParallelPort(1);
 
                         lineRenderer.positionCount = 1;
                         lineRenderer.SetPosition(0, touch.point);
-
                         // Store the first touch point for comparison
                         firstTouchPoint = touch.point;
                     }
@@ -237,19 +221,43 @@ public class ProjectManager : MonoBehaviour
     }
     void Update()
     {
+        
+
         // Detect input to start adjusting the paper's position
-        if (m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
+        if (r_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
         {
             isAdjustingPaper = true;
         }
 
         // Detect input to stop adjusting the paper's position
-        if (!m_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
+        if (!r_hand.GetFingerIsPinching(OVRHand.HandFinger.Index))
         {
             isAdjustingPaper = false;
         }
     }
+    void InitializeLineRenderer()
+    {
+        GameObject lineObject = new("Line");
+        lineRenderer = lineObject.AddComponent<LineRenderer>();
+        lineRenderer.positionCount = 0;
+        lineRenderer.startWidth = 0.01f;
+        lineRenderer.endWidth = 0.01f;
+        lineRenderer.numCapVertices = 2;
+        lineRenderer.numCornerVertices = 2;
+        lineRenderer.useWorldSpace = true;
+        lineRenderer.Simplify(25);
+        lineRenderer.alignment = LineAlignment.TransformZ;
+        lineRenderer.material = new Material(Shader.Find("Standard")) { color = Color.black };
+        lineRenderer.lightProbeUsage = 0;
+        lineRenderer.generateLightingData = false;
+        lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        lineRenderer.receiveShadows = false;
+    }
 
+    void InitializeParallelPort()
+    {
+        PortAddress = 0x278; // LPT3 address
+    }
     private void SendTriggerToParallelPort(int triggerValue)
     {
         Data = triggerValue;
